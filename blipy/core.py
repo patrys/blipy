@@ -162,6 +162,8 @@ class Request(object):
 		self.url = '%s%s' % (URL, url)
 		self.method = method
 		if type(data) == dict:
+			for key, val in data.iteritems():
+				data[key] = val.encode('utf-8')
 			data = urllib.urlencode(data)
 		self.data = data
 		self._debug = DEBUG
@@ -188,10 +190,7 @@ class Request(object):
 			
 			data = e.read()
 			if e.code == 201:
-				self.__print_debug(data)
 				return True
-			self.__print_debug('Requested url: %s'%self.url)
-			self.__print_debug('error!!!!\nHTTP %s\n%s\n\n%s'%(e.code, e.headers, data ))
 			return data
 		data = response.read()
 		if self._debug:
