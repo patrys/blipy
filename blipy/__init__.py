@@ -21,9 +21,11 @@
 
 UPDATE_BODY_LIMIT = 160
 
+from pprint import pprint
 import types
 import datetime
-from core import BaseApiObject, ApiException, BlipocInputError, Request
+from core import BaseApiObject, ApiException, BlipocInputError, Request, _ALL, _ALL_SINCE
+
 cached = {}
 
 def propertize(name, cls):
@@ -90,6 +92,37 @@ class Transport(BaseApiObject):
 	__fields__ = {'id': int,
 					'name': unicode}
 
+
+
+class Notice(BaseApiObject):
+	__fields__ = {'id': int,
+				  'body': unicode,
+				  'user_path': unicode,
+				  'created_at': datetime.datetime}
+		
+	@staticmethod
+	def get_last(account, last_id = None, limit = None):
+		uri = '/notices'
+		if last_id:
+			uri = '/notices/since/%s'%last_id
+			
+		if limit:
+			uri = '%s?limit=%s'%(uri, limit)
+			
+		return Notice.get_list_by_uri(account, uri)
+		
+	@staticmethod
+	def get_since(last_id = None, limit = None):
+		uri = '/notices'
+		if last_id:
+			uri = '/notices/since/%s'%last_id
+			
+		if limit:
+			uri = '%s?limit=%s'%(uri, limit)
+			
+		return Notice.get_list_by_uri(account, uri)
+		
+		
 class Update(BaseApiObject):
 	__fields__ = { 'id': int,
 					'body': unicode,
@@ -123,7 +156,20 @@ class Update(BaseApiObject):
 			return Update.get_list_by_uri(account, '/dashboard/since/%s' % update_id)
 		else:
 			return Update.get_list_by_uri(account, '/dashboard')
-
+		
+	@classmethod
+	def _get_list_element_by_uri(cls, account, i):
+		
+		if i.get('type') == 'Status':
+			return Update(account, i)
+		elif i.get('type') == 'Notice':
+			return Notice(account, i)
+		elif i.get('type') == 'DirectedMessage':
+			return DirectedMessage(account, i)
+		
+		
+	
+	
 	@staticmethod
 	def list(account, update_id = None):
 		"""
@@ -255,6 +301,26 @@ class User(BaseApiObject):
 			return cls.get_by_uri(account, '/users/%s' % user)
 		else:
 			return cls.get_by_uri(account, '/users/')
+
+
+if __name__ == '__main__':
+    import sys
+    if len(sys.argv) != 3:
+        sys.exit('Usage: %s login haslo'%__file__)
+
+    username = sys.argv[1]
+    password = sys.argv[2]
+    
+    u = Account()
+
+    u.set_credentials(username, password)
+    
+    n = Notice.get_last(u, limit = 50)
+    for item in n:
+    	print item.id, item.body, item.user_path, item.created_at
+    
+    
+
 
 #
 # $Id: api.py 41 2008-01-31 11:39:02Z patrys $
