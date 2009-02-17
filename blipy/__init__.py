@@ -13,7 +13,10 @@
  version: 0.02
  
  To use it:
- import pblipoc.api
+ import blipy
+ a = blipy.Account(username, password)
+ print blipy.Update.dashboard(a)
+ 
 
 """
 
