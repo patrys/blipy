@@ -25,6 +25,7 @@
 UPDATE_BODY_LIMIT = 160
 
 from pprint import pprint
+import urllib
 import types
 import datetime
 from core import BaseApiObject, ApiException, BlipocInputError, Request, _ALL, _ALL_SINCE, encode_multipart
@@ -160,6 +161,7 @@ class Update(BaseApiObject):
         else:
             return Update.get_list_by_uri(account, '/dashboard')
         
+
     @classmethod
     def _get_list_element_by_uri(cls, account, i):
         
@@ -246,6 +248,19 @@ class DirectedMessage(Update):
         return r.do_request()
 
 class Status(Update):
+    @staticmethod
+    def tags(account, tag, limit=None, since = None):
+        params = {}
+        if isinstance(limit, int):
+            params['limit'] = limit
+        url = '/tags/%s'%tag
+        if isinstance(since, int):
+            url = url+'/since/%s'%since
+        if params:
+            url = '%s?%s'%(url, urllib.urlencode(params))
+        return Status.get_list_by_uri(account, url)
+
+
     @staticmethod
     def list(account, update_id = None):
         """
