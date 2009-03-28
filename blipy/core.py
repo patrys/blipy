@@ -13,6 +13,7 @@ URL = 'http://api.blip.pl'
 USER_AGENT = 'blipy - Blip.pl api library for python'
 DEBUG = False # to be False in stable version
 
+import mimetypes, mimetools, base64
 import datetime, time, urllib2, urllib, base64
 import simplejson
 from pprint import pprint
@@ -164,15 +165,26 @@ class Request(object):
     """
     request object for api.blip.pl
     """
-    def __init__(self, credentials, url, method, data):
+    def __init__(self, credentials, url, method, data, content_type = None):
+        """
+        credentials = (username, password)
+        url = update_url
+        method = POST || GET
+        data = string with POST data or dict to encode
+        content_type = HTTP header with content type (multipart/form-data)
+        """
         self.credentials = credentials
         self.url = '%s%s' % (URL, url)
         self.method = method
         if type(data) == dict:
             for key, val in data.iteritems():
-                data[key] = val.encode('utf-8')
+                if isinstance(val, unicode):
+                    data[key] = val.encode('utf-8')
+                else:
+                    data[key] = val
             data = urllib.urlencode(data)
         self.data = data
+        self.content_type = content_type or  'application/x-www-form-urlencoded'
         self._debug = DEBUG
         
     def do_request(self):
@@ -189,12 +201,12 @@ class Request(object):
         
         if self.data:
             request.add_data(self.data)
-            request.add_header('Content-Type', 'application/x-www-form-urlencoded')
+            request.add_header('Content-Type', self.content_type )
+            request.add_header('Content-Length', len(self.data))
         try:
             response = urllib2.urlopen(request)
         except urllib2.HTTPError, e:
             # 201 - Created:
-            
             data = e.read()
             if e.code == 201:
                 return True
@@ -229,6 +241,36 @@ class _ALL_SINCE(object):
         return ''
     def __repr__(self):
         return '<_ALL_SINCE BlipApi class>'
+
+
+def encode_multipart(fields, files):
+    """
+    fields = {form_field: form_value}
+    files = ( ( form_field, file_name, file_contents,)..)
+
+    """
+    boundary = mimetools.choose_boundary()
+    contents =[]
+    for key, value in fields.items():
+        if isinstance(value, unicode):
+            value = value.encode('utf-8')
+        contents.append('--%s'%boundary)
+        contents.append('Content-Disposition: form-data; name="%s"' % key)
+        contents.append('')
+        contents.append(value)
+    for (key, fname, fvalue,) in files:
+        contents.append('--%s'%boundary)
+        contents.append('Content-Disposition: form-data; name="%s"; filename=%s'%(key, fname,) )
+        contents.append('Content-Type: %s '%(mimetypes.guess_type(fname)[0] or 'application/octet-stream'))
+        contents.append('Content-Transfer-Encoding: base64')
+        contents.append('')
+        contents.append(fvalue)
+        contents.append(base64.b64encode(fvalue))
+    contents.append('--%s--'%boundary)
+    contents.append('')
+    content_type = "multipart/form-data; boundary=%s"%boundary
+    return content_type, '\r\n'.join(contents)
+
 
 
 if __name__ == '__main__':
