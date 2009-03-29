@@ -48,6 +48,7 @@ class BaseApiObject(object):
                 if DEBUG:
                     print args[0]
                     print '%s'%e
+                raise
 
     @classmethod
     def get_by_uri(cls, account, uri):
@@ -241,6 +242,26 @@ class _ALL_SINCE(object):
         return ''
     def __repr__(self):
         return '<_ALL_SINCE BlipApi class>'
+
+
+class _SUB_ALL(object):
+    def __str__(self):
+        return ''
+    def __repr__(self):
+        return '<%s BlipApi class>'%self.__class__.__name__
+
+class _SUB_FROM(_SUB_ALL):
+    def __str__(self):
+        return '/from'
+
+     
+class _SUB_TO(_SUB_ALL):
+    def __str__(self):
+        return '/to'
+
+SUB_ALL = _SUB_ALL()
+SUB_FROM = _SUB_FROM()
+SUB_TO = _SUB_TO()
 
 
 def encode_multipart(fields, files):

@@ -28,7 +28,7 @@ from pprint import pprint
 import urllib
 import types
 import datetime
-from core import BaseApiObject, ApiException, BlipocInputError, Request, _ALL, _ALL_SINCE, encode_multipart
+from core import BaseApiObject, ApiException, BlipocInputError, Request, _ALL, _ALL_SINCE, SUB_ALL, SUB_FROM, SUB_TO, encode_multipart
 
 cached = {}
 
@@ -316,7 +316,6 @@ class User(BaseApiObject):
     current_status = property(propertize('current_status', 'Status'), None)
     avatar = property(propertize('avatar', 'Avatar'), None)
     background = property(propertize('background', 'Background'), None)
-
     @staticmethod
     def friends(account):
         """
@@ -334,6 +333,39 @@ class User(BaseApiObject):
             return cls.get_by_uri(account, '/users/%s' % user)
         else:
             return cls.get_by_uri(account, '/users/')
+
+def user_from_path(account, path):
+    """
+    user instance factory
+    """
+    path, u = path.strip('/').split('/', 1)
+    return User.get(account, u)
+
+class Subscription(BaseApiObject):
+    __fields__ = { 'tracked_user_path': unicode,
+                   'tracking_user_path': unicode,
+                   'transport': Transport
+                    }
+    @classmethod
+    def get(cls, account, user = None, direction = SUB_ALL):
+        url = '/subscriptions%s'%direction
+        if user:
+            '/users/%s%s'%(user, url)
+        return cls.get_list_by_uri(account, url)
+    
+    @staticmethod
+    def set(cls, account, user):
+        url = '/subscriptions/%s'%user
+        r = Request(account.credentials, url, 'PUT')
+        return r.do_request()
+        
+    @staticmethod
+    def delete(cls, account, user):
+        url = '/subscriptions/%s'%user
+        r = Request(account.credentials, url, 'DELETE')
+        return r.do_request()
+    
+        
 
 
 if __name__ == '__main__':
