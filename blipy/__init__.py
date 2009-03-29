@@ -350,7 +350,7 @@ class Subscription(BaseApiObject):
     def get(cls, account, user = None, direction = SUB_ALL):
         url = '/subscriptions%s'%direction
         if user:
-            '/users/%s%s'%(user, url)
+            url = '/users/%s%s'%(user, url)
         return cls.get_list_by_uri(account, url)
     
     @staticmethod
