@@ -211,6 +211,7 @@ class Request(object):
             data = e.read()
             if e.code == 201:
                 return True
+            raise e
             return data
         data = response.read()
         if self._debug:
@@ -219,7 +220,13 @@ class Request(object):
 
     def request_json(self):
         
-        return simplejson.loads(self.do_request())
+        data = self.do_request()
+        try:
+            return simplejson.loads(data)
+        except (ValueError, TypeError,), e:
+            print 'error during unpack: %s\n%s'%(e, data)
+            raise
+
 
     def __print_debug(self, data):
         print '>>> pblipoc debug', time.ctime()

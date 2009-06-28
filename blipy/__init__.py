@@ -47,7 +47,10 @@ def propertize(name, cls):
     return proxied_property
 
 class Account(object):
-    credentials = None
+    def __init__(self, username= None, password = None):
+        self.credentials = None
+        if username is not None and password is not None:
+            self.set_credentials(username, password)
 
     def set_credentials(self, username, password):
         """
