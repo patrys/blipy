@@ -28,8 +28,7 @@ from pprint import pprint
 import urllib
 import types
 import datetime
-from core import BaseApiObject, ApiException, BlipocInputError, Request, _ALL, _ALL_SINCE, SUB_ALL, SUB_FROM, SUB_TO, encode_multipart
-
+from core import BaseApiObject, ApiException, BlipocInputError, Request, _ALL, _ALL_SINCE, SUB_ALL, SUB_FROM, SUB_TO, encode_multipart, DEBUG
 cached = {}
 
 def propertize(name, cls):
@@ -174,9 +173,8 @@ class Update(BaseApiObject):
             return Notice(account, i)
         elif i.get('type') == 'DirectedMessage':
             return DirectedMessage(account, i)
-        
-        
-    
+        elif i.get('type') == 'PrivateMessage':
+            return PrivateMessage(account, i)
     
     @staticmethod
     def list(account, update_id = None):
@@ -221,6 +219,44 @@ class Update(BaseApiObject):
 
         return r.do_request()
 
+class PrivateMessage(Update):
+    @staticmethod
+    def list(account, update_id = None):
+        """
+        retrieves user's directed messages.
+        if update_id provided, it will return changes made after update_id
+        """
+        if update_id:
+            return DirectedMessage.get_list_by_uri(account, '/private_messages/%s/since' % update_id)
+        else:
+            return DirectedMessage.get_list_by_uri(account, '/private_messages')
+
+    @classmethod
+    def get(cls, account, update_id):
+        """
+        get specified status
+        """
+        return cls.get_by_uri(account, '/private_messages/%s' % update_id)
+
+    @staticmethod
+    def create(account, status, recipient, picture= None):
+        """
+        create private message
+        """
+        if len(status)> UPDATE_BODY_LIMIT:
+            raise BlipocInputError('status jest dłuższy niż dopuszczalna wielkość: (%s > %s)'%(len(status), UPDATE_BODY_LIMIT) )
+        content_encoding = None
+        post_data =  {'private_message[body]': status, 'private_message[recipient]': recipient }
+        if picture:
+            # we don't use urllib.urlencode, because we must use mimetools, so 
+            #post_data['update[picture] = picture
+            # won't work
+            picture.insert(0, "private_message[picture]")
+            picture = [picture]
+        content_encoding, post_data = encode_multipart(post_data, picture or [])
+        r = Request(account.credentials, '/private_messages', 'POST',post_data, content_encoding)
+        return r.do_request()
+
 class DirectedMessage(Update):
     @staticmethod
     def list(account, update_id = None):
@@ -241,13 +277,22 @@ class DirectedMessage(Update):
         return cls.get_by_uri(account, '/directed_messages/%s' % update_id)
 
     @staticmethod
-    def create(account, status, recipient):
+    def create(account, status, recipient, picture = None):
         """
         create private message
         """
         if len(status)> UPDATE_BODY_LIMIT:
             raise BlipocInputError('status jest dłuższy niż dopuszczalna wielkość: (%s > %s)'%(len(status), UPDATE_BODY_LIMIT) )
-        r = Request(account.credentials, '/directed_messages', 'POST', {'directed_message[body]': status, 'directed_message[recipient]': recipient})
+        content_encoding = None
+        post_data =  {'directed_message[body]': status, 'directed_message[recipient]': recipient }
+        if picture:
+            # we don't use urllib.urlencode, because we must use mimetools, so 
+            #post_data['update[picture] = picture
+            # won't work
+            picture.insert(0, "directed_message[picture]")
+            picture = [picture]
+        content_encoding, post_data = encode_multipart(post_data, picture or [])
+        r = Request(account.credentials, '/directed_messages', 'POST',post_data, content_encoding)
         return r.do_request()
 
 class Status(Update):
@@ -382,10 +427,14 @@ if __name__ == '__main__':
     u = Account()
 
     u.set_credentials(username, password)
-    
-    n = Notice.get_last(u, limit = 50)
-    for item in n:
-        print item.id, item.body, item.user_path, item.created_at
+
+    import core
+    core.DEBUG = True
+    pm = DirectedMessage.create(u,'cezio', 'test')
+    print pm
+    #n = Notice.get_last(u, limit = 50)
+    #for item in n:
+    #    print item.id, item.body, item.user_path, item.created_at
     
     
 

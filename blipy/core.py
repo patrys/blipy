@@ -11,7 +11,7 @@
 API_VERSION = 0.02
 URL = 'http://api.blip.pl'
 USER_AGENT = 'blipy - Blip.pl api library for python'
-DEBUG = False # to be False in stable version
+DEBUG = False# to be False in stable version
 
 import mimetypes, mimetools, base64
 import datetime, time, urllib2, urllib, base64
@@ -190,7 +190,7 @@ class Request(object):
         
     def do_request(self):
         if self._debug:
-            self.__print_debug('Requesting url: %s'%self.url)
+            self.__print_debug('Requesting url: %s %s \n with %s data:\n %s'%(self.method, self.url, self.method, self.data))
         request = urllib2.Request(self.url)
         if self.credentials:
             request.add_header('Authorization', 
