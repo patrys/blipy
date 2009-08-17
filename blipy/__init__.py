@@ -5,7 +5,7 @@
 
  authors: Cezary Statkiewicz (cezio [at] thelirium.net), Patryk Zawadzki <patrys@pld-linux.org>
  website: http://github.com/patrys/blipy/tree/master
-
+ license: GNU Lesser General Public License http://www.gnu.org/licenses/lgpl.html
  API: http://www.blip.pl/api-0.02.html
  version: 0.02
  
@@ -15,15 +15,12 @@
  print blipy.Update.dashboard(a)
 """
 
-# some globals
-
-UPDATE_BODY_LIMIT = 160
-
 from pprint import pprint
 import urllib
 import types
 import datetime
-from core import BaseApiObject, ApiException, BlipocInputError, Request, _ALL, _ALL_SINCE, SUB_ALL, SUB_FROM, SUB_TO, encode_multipart, DEBUG
+from core import BaseApiObject, ApiException, BlipocInputError, Request, _ALL, _ALL_SINCE, SUB_ALL, SUB_FROM, SUB_TO, encode_multipart, DEBUG, UPDATE_BODY_LIMIT
+
 cached = {}
 
 def propertize(name, cls):
@@ -407,9 +404,6 @@ class Subscription(BaseApiObject):
         url = '/subscriptions/%s'%user
         r = Request(account.credentials, url, 'DELETE')
         return r.do_request()
-    
-        
-
 
 if __name__ == '__main__':
     import sys
@@ -427,9 +421,3 @@ if __name__ == '__main__':
     core.DEBUG = True
     pm = DirectedMessage.create(u,'cezio', 'test')
     print pm
-    #n = Notice.get_last(u, limit = 50)
-    #for item in n:
-    #    print item.id, item.body, item.user_path, item.created_at
-#
-# $Id: api.py 41 2008-01-31 11:39:02Z patrys $
-#

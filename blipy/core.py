@@ -1,9 +1,11 @@
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
 # Blipy - A Python API for blip.pl
 #
 # authors: Cezary Statkiewicz (cezio [at] thelirium.net), Patryk Zawadzki <patrys@pld-linux.org>
 # website: http://github.com/patrys/blipy/tree/master
+# license: GNU Lesser General Public License http://www.gnu.org/licenses/lgpl.html
 #
 # version: $Id: core.py 38 2008-01-28 16:18:29Z patrys $
 
@@ -11,6 +13,7 @@ API_VERSION = 0.02
 URL = 'http://api.blip.pl'
 USER_AGENT = 'blipy - Blip.pl api library for python'
 DEBUG = False# to be False in stable version
+UPDATE_BODY_LIMIT = 160
 
 import mimetypes, mimetools, base64
 import datetime, time, urllib2, urllib, base64
@@ -317,12 +320,8 @@ if __name__ == '__main__':
     u.set('how do you handle f')
 
     u = User()
-    
     u.set_credentials(username, password)
     pprint(u.friends())
-    
-    pprint(friends)
     pprint(u.users())
     
 
-# $Id: api.py 41 2008-01-31 11:39:02Z patrys $
