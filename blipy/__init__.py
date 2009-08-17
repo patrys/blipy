@@ -1,13 +1,10 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 """
- blipoc - Blip.pl On Console
- This is part of blipoc - python-blipoc (or in short: pblipoc)
+ Blipy - A Python API for blip.pl
 
- $Id: api.py 41 2008-01-31 11:39:02Z patrys $
- 
- author: Cezary Statkiewicz (cezio [at] thelirium.net), Patryk Zawadzki <patrys@pld-linux.org>
- website: http://code.google.com/p/blipoc/
+ authors: Cezary Statkiewicz (cezio [at] thelirium.net), Patryk Zawadzki <patrys@pld-linux.org>
+ website: http://github.com/patrys/blipy/tree/master
 
  API: http://www.blip.pl/api-0.02.html
  version: 0.02
@@ -16,8 +13,6 @@
  import blipy
  a = blipy.Account(username, password)
  print blipy.Update.dashboard(a)
- 
-
 """
 
 # some globals
@@ -435,10 +430,6 @@ if __name__ == '__main__':
     #n = Notice.get_last(u, limit = 50)
     #for item in n:
     #    print item.id, item.body, item.user_path, item.created_at
-    
-    
-
-
 #
 # $Id: api.py 41 2008-01-31 11:39:02Z patrys $
 #

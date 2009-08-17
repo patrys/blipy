@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
-# -*- coding: utf-8 -*-
 #
-# blipoc - Blip On Console
+# Blipy - A Python API for blip.pl
 #
-# author: Cezary Statkiewicz (cezio [at] thelirium.net), Patryk Zawadzki <patrys@pld-linux.org>
-# website: http://code.google.com/p/blipoc/
+# authors: Cezary Statkiewicz (cezio [at] thelirium.net), Patryk Zawadzki <patrys@pld-linux.org>
+# website: http://github.com/patrys/blipy/tree/master
 #
 # version: $Id: core.py 38 2008-01-28 16:18:29Z patrys $
 
