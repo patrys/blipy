@@ -49,6 +49,7 @@ class Account(object):
         """
         self.credentials = (username, password,)
 
+
 class Movie(BaseApiObject):
     __fields__ = {'id': int,
                     'url': unicode}
@@ -335,6 +336,8 @@ class Bliposphere(BaseApiObject):
         return Status.get_list_by_uri(account, '/bliposphere')
 
 class Avatar(BaseApiObject):
+
+    base_name = 'avatar'
     __fields__ = { 'id': int,
                     'url_15': unicode,
                     'url_30': unicode,
@@ -343,7 +346,43 @@ class Avatar(BaseApiObject):
                     'url_120': unicode,
                     'url': unicode}
 
-class Background(BaseApiObject):
+    @classmethod
+    def get(cls, user_name = None):
+        account = None
+        if user_name:
+            uri = '/users/%s/%s/'%(user_name, cls.base_name)
+        else:
+            uri = '/%s'%cls.base_name
+        r = Request(account, uri, 'GET')
+        data = r.request_json()
+        return cls(account, data)
+
+    @classmethod
+    def delete(cls, account):
+        r = Request(account.credentials, '/%s'%cls.base_name, 'DELETE', None)
+        return r.do_request()
+
+    @classmethod
+    def create(cls, account, picture):
+        
+        content_encoding = None
+        post_data = {}
+        if not picture:
+            raise BlipocInputError('Empty picture in %s.create'%cls.__name__)
+        picture = ['avatar.jpg', picture]
+        picture.insert(0, "%s[file]"%cls.base_name)
+        picture = [picture]
+        content_encoding, post_data = encode_multipart(post_data, picture or [])
+        r = Request(account.credentials, '/%s'%cls.base_name, 'POST',post_data, content_encoding)
+        data = r.request_json()
+
+        return cls(data)
+
+
+
+
+class Background(Avatar):
+    base_name = 'background'
     __fields__ = { 'id': int,
                     'url': unicode}
 
@@ -402,12 +441,12 @@ class Subscription(BaseApiObject):
     @staticmethod
     def delete(cls, account, user):
         url = '/subscriptions/%s'%user
-        r = Request(account.credentials, url, 'DELETE')
+        r = Request(account.credentials, url, 'DELETE', None)
         return r.do_request()
 
 if __name__ == '__main__':
     import sys
-    if len(sys.argv) != 3:
+    if len(sys.argv) != 4:
         sys.exit('Usage: %s login haslo'%__file__)
 
     username = sys.argv[1]
@@ -416,8 +455,10 @@ if __name__ == '__main__':
     u = Account()
 
     u.set_credentials(username, password)
-
     import core
     core.DEBUG = True
-    pm = DirectedMessage.create(u,'cezio', 'test')
-    print pm
+    #bg = Avatar.create(u, open(sys.argv[3], 'r').read())
+    #bg = Background.delete(u)
+    #print bg
+    #pm = DirectedMessage.create(u,'cezio', 'test')
+    #print pm

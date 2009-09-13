@@ -168,7 +168,7 @@ class Request(object):
     """
     request object for api.blip.pl
     """
-    def __init__(self, credentials, url, method, data, content_type = None):
+    def __init__(self, credentials, url, method, data = None, content_type = None):
         """
         credentials = (username, password)
         url = update_url
@@ -179,13 +179,19 @@ class Request(object):
         self.credentials = credentials
         self.url = '%s%s' % (URL, url)
         self.method = method
+
         if type(data) == dict:
             for key, val in data.iteritems():
                 if isinstance(val, unicode):
                     data[key] = val.encode('utf-8')
                 else:
                     data[key] = val
+            if not method.lower() in ('get', 'post'):
+                data['_method'] = method.upper()
             data = urllib.urlencode(data)
+        if not data and not method.lower() in ('get', 'post'):
+            data = urllib.urlencode({'_method': method.upper()})
+
         self.data = data
         self.content_type = content_type or  'application/x-www-form-urlencoded'
         self._debug = DEBUG
@@ -208,15 +214,30 @@ class Request(object):
             request.add_header('Content-Length', len(self.data))
         try:
             response = urllib2.urlopen(request)
+            if response.code == 201 and response.info().getheader('Location', None):
+                loc = response.info().getheader('location', None)
+                if loc:
+                    self.url = loc
+                    self.method = 'GET'
+                    self.data = None
+                    return self.do_request()
+   
         except urllib2.HTTPError, e:
-            # 201 - Created:
+            # 201 - Created. < python 2.6
             data = e.read()
             if e.code == 201:
+                loc = e.info().getheader('location', None)
+                if loc:
+                    self.url = loc
+                    self.method = 'GET'
+                    self.data = None
+                    return self.do_request()
+
                 return True
             raise e
-            return data
         data = response.read()
         if self._debug:
+            self.__print_debug('%s: %s'%(response.geturl(), response.code))
             self.__print_debug(data)
         return data
 
