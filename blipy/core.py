@@ -160,7 +160,7 @@ Class1:
         
         out = '%s: \n%s\n'%(self.__class__.__name__, out)
         return out
-        
+
     __str__ = _print
     __repr__ = _print
 

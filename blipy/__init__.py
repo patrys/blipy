@@ -123,6 +123,8 @@ class Notice(BaseApiObject):
         
         
 class Update(BaseApiObject):
+    base_names = 'updates'
+    base_name = 'update'
     __fields__ = { 'id': int,
                     'body': unicode,
                     'type': unicode,
@@ -169,26 +171,32 @@ class Update(BaseApiObject):
         elif i.get('type') == 'PrivateMessage':
             return PrivateMessage(account, i)
     
-    @staticmethod
-    def list(account, update_id = None):
+    @classmethod
+    def list(cls, account, update_id = None):
         """
         retrieves user's statuses.
         if update_id provided, it will return changes made after update_id
         """
         if update_id:
-            return Update.get_list_by_uri(account, '/updates/%s/since' % update_id)
+            return cls.get_list_by_uri(account, '/%s/%s/since' % (cls.base_names, update_id))
         else:
-            return Update.get_list_by_uri(account, '/updates')
+            return cls.get_list_by_uri(account, '/%s'%cls.base_names)
 
     @classmethod
     def get(cls, account, update_id):
         """
         get specified status
         """
-        return cls.get_by_uri(account, '/updates/%s' % update_id)
+        return cls.get_by_uri(account, '/%s/%s' %(cls.base_name, update_id))
 
-    @staticmethod
-    def create(account, status, picture = None):
+    @classmethod
+    def delete(cls, account, update_id):
+        r = Request(account.credentials, '/%s/%s'%(cls.base_names,update_id), 'DELETE')
+        return r.do_request()
+
+
+    @classmethod
+    def create(cls, account, status, picture = None, **kw):
         """
         set new status
         status - text message up to UPDATE_BODY_LIMIT (160 chars)
@@ -198,97 +206,34 @@ class Update(BaseApiObject):
         """
         if len(status)> UPDATE_BODY_LIMIT:
             raise BlipocInputError('status jest dłuższy niż dopuszczalna wielkość: (%s > %s)'%(len(status), UPDATE_BODY_LIMIT) )
-        post_data = {'update[body]': status}
+        post_data = {'%s[body]'%cls.base_name: status}
+        # recipient in DirectedMessage
+        for k, v in kw.iteritems():
+            post_data['%s[%s]'%(cls.base_name, k)] = v
         content_encoding = None
         if picture:
             # we don't use urllib.urlencode, because we must use mimetools, so 
             #post_data['update[picture] = picture
             # won't work
-            picture.insert(0, "update[picture]")
+            picture.insert(0, "%s[picture]"%cls.base_name)
             picture = [picture]
-        content_encoding, post_data = encode_multipart(post_data, picture or [])
+            content_encoding, post_data = encode_multipart(post_data, picture or [])
 
-        r = Request(account.credentials, '/updates', 'POST', post_data, content_encoding)
-
-        return r.do_request()
-
-class PrivateMessage(Update):
-    @staticmethod
-    def list(account, update_id = None):
-        """
-        retrieves user's directed messages.
-        if update_id provided, it will return changes made after update_id
-        """
-        if update_id:
-            return DirectedMessage.get_list_by_uri(account, '/private_messages/%s/since' % update_id)
-        else:
-            return DirectedMessage.get_list_by_uri(account, '/private_messages')
-
-    @classmethod
-    def get(cls, account, update_id):
-        """
-        get specified status
-        """
-        return cls.get_by_uri(account, '/private_messages/%s' % update_id)
-
-    @staticmethod
-    def create(account, status, recipient, picture= None):
-        """
-        create private message
-        """
-        if len(status)> UPDATE_BODY_LIMIT:
-            raise BlipocInputError('status jest dłuższy niż dopuszczalna wielkość: (%s > %s)'%(len(status), UPDATE_BODY_LIMIT) )
-        content_encoding = None
-        post_data =  {'private_message[body]': status, 'private_message[recipient]': recipient }
-        if picture:
-            # we don't use urllib.urlencode, because we must use mimetools, so 
-            #post_data['update[picture] = picture
-            # won't work
-            picture.insert(0, "private_message[picture]")
-            picture = [picture]
-        content_encoding, post_data = encode_multipart(post_data, picture or [])
-        r = Request(account.credentials, '/private_messages', 'POST',post_data, content_encoding)
-        return r.do_request()
+        r = Request(account.credentials, '/%s'%cls.base_names, 'POST', post_data, content_encoding)
+        return cls(account, r.request_json())
 
 class DirectedMessage(Update):
-    @staticmethod
-    def list(account, update_id = None):
-        """
-        retrieves user's directed messages.
-        if update_id provided, it will return changes made after update_id
-        """
-        if update_id:
-            return DirectedMessage.get_list_by_uri(account, '/directed_messages/%s/since' % update_id)
-        else:
-            return DirectedMessage.get_list_by_uri(account, '/directed_messages')
+    base_names = 'directed_messages'
+    base_name = 'directed_message'
 
-    @classmethod
-    def get(cls, account, update_id):
-        """
-        get specified status
-        """
-        return cls.get_by_uri(account, '/directed_messages/%s' % update_id)
-
-    @staticmethod
-    def create(account, status, recipient, picture = None):
-        """
-        create private message
-        """
-        if len(status)> UPDATE_BODY_LIMIT:
-            raise BlipocInputError('status jest dłuższy niż dopuszczalna wielkość: (%s > %s)'%(len(status), UPDATE_BODY_LIMIT) )
-        content_encoding = None
-        post_data =  {'directed_message[body]': status, 'directed_message[recipient]': recipient }
-        if picture:
-            # we don't use urllib.urlencode, because we must use mimetools, so 
-            #post_data['update[picture] = picture
-            # won't work
-            picture.insert(0, "directed_message[picture]")
-            picture = [picture]
-        content_encoding, post_data = encode_multipart(post_data, picture or [])
-        r = Request(account.credentials, '/directed_messages', 'POST',post_data, content_encoding)
-        return r.do_request()
+class PrivateMessage(DirectedMessage):
+    base_names = 'private_messages'
+    base_name = 'private_message' 
+   
 
 class Status(Update):
+    base_names = 'statuses'
+    base_name = 'status'
     @staticmethod
     def tags(account, tag, limit=None, since = None):
         params = {}
@@ -301,34 +246,6 @@ class Status(Update):
             url = '%s?%s'%(url, urllib.urlencode(params))
         return Status.get_list_by_uri(account, url)
 
-
-    @staticmethod
-    def list(account, update_id = None):
-        """
-        retrieves user's status messages.
-        if update_id provided, it will return changes made after update_id
-        """
-        if update_id:
-            return Status.get_list_by_uri(account, '/statuses/%s/all_since' % update_id)
-        else:
-            return Status.get_list_by_uri(account, '/statuses/all')
-
-    @classmethod
-    def get(cls, account, update_id):
-        """
-        get specified status
-        """
-        return cls.get_by_uri(account, '/statuses/%s' % update_id)
-
-    @staticmethod
-    def create(account, status):
-        """
-        create status message
-        """
-        if len(status)> UPDATE_BODY_LIMIT:
-            raise BlipocInputError('status jest dłuższy niż dopuszczalna wielkość: (%s > %s)'%(len(status), UPDATE_BODY_LIMIT) )
-        r = Request(account.credentials, '/statuses', 'POST', {'status[body]': status})
-        return r.do_request()
 
 class Bliposphere(BaseApiObject):
     @staticmethod
@@ -446,7 +363,7 @@ class Subscription(BaseApiObject):
 
 if __name__ == '__main__':
     import sys
-    if len(sys.argv) != 4:
+    if len(sys.argv) != 3:
         sys.exit('Usage: %s login haslo'%__file__)
 
     username = sys.argv[1]
