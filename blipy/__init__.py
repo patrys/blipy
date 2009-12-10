@@ -7,7 +7,7 @@
  website: http://github.com/patrys/blipy/tree/master
  license: GNU Lesser General Public License http://www.gnu.org/licenses/lgpl.html
  API: http://www.blip.pl/api-0.02.html
- version: 0.02
+ version: 0.02+oauth
  
  To use it:
  import blipy

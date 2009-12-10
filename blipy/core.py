@@ -1,17 +1,18 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-#
-# Blipy - A Python API for blip.pl
-#
-# authors: Cezary Statkiewicz (cezio [at] thelirium.net), Patryk Zawadzki <patrys@pld-linux.org>
-# website: http://github.com/patrys/blipy/tree/master
-# license: GNU Lesser General Public License http://www.gnu.org/licenses/lgpl.html
-#
-# version: $Id: core.py 38 2008-01-28 16:18:29Z patrys $
+"""
+ Blipy - A Python API for blip.pl
 
-API_VERSION = 0.02
+ authors: Cezary Statkiewicz (cezio [at] thelirium.net), Patryk Zawadzki <patrys@pld-linux.org>
+ website: http://github.com/patrys/blipy/tree/master
+ license: GNU Lesser General Public License http://www.gnu.org/licenses/lgpl.html
+ API: http://www.blip.pl/api-0.02.html
+ version: 0.02+oauth
+ 
+"""
+API_VERSION = 0.02 #+ oauth
 URL = 'http://api.blip.pl'
-USER_AGENT = 'blipy - Blip.pl api library for python'
+USER_AGENT = 'blipy - Blip.pl api library for python (0.02+oauth)'
 DEBUG = False# to be False in stable version
 UPDATE_BODY_LIMIT = 160
 
@@ -26,6 +27,8 @@ class ApiException(Exception):
 class BlipocInputError(ApiException):
     pass
 
+class BlipocConfigError(ApiException):
+    pass
 class BaseApiObject(object):
     """
     base blip api class for containers
@@ -179,7 +182,7 @@ class Request(object):
         self.credentials = credentials
         self.url = '%s%s' % (URL, url)
         self.method = method
-
+        self._data = {}
         if type(data) == dict:
             for key, val in data.iteritems():
                 if isinstance(val, unicode):
@@ -188,9 +191,11 @@ class Request(object):
                     data[key] = val
             if not method.lower() in ('get', 'post'):
                 data['_method'] = method.upper()
+            self._data = data
             data = urllib.urlencode(data)
         if not data and not method.lower() in ('get', 'post'):
             data = urllib.urlencode({'_method': method.upper()})
+            self._data = data
 
         self.data = data
         self.content_type = content_type or  'application/x-www-form-urlencoded'
@@ -200,9 +205,9 @@ class Request(object):
         if self._debug:
             self.__print_debug('Requesting url: %s %s \n with %s data:\n %s'%(self.method, self.url, self.method, self.data))
         request = urllib2.Request(self.url)
-        if self.credentials:
-            request.add_header('Authorization', 
-                                'Basic %s'%( base64.b64encode('%s:%s'%self.credentials )))
+        #if self.credentials:
+        #    request.add_header('Authorization', 
+        #                        'Basic %s'%( base64.b64encode('%s:%s'%self.credentials )))
         request.add_header('User-Agent', USER_AGENT)
         request.add_header('X-blip-api', '%s'%API_VERSION)
         request.add_header('Accept', 'application/json')
@@ -212,6 +217,10 @@ class Request(object):
             request.add_data(self.data)
             request.add_header('Content-Type', self.content_type )
             request.add_header('Content-Length', len(self.data))
+
+        if self.credentials:
+            self.credentials.sign_request(self, request)
+
         try:
             response = urllib2.urlopen(request)
             if response.code == 201 and response.info().getheader('Location', None):
@@ -324,6 +333,7 @@ def encode_multipart(fields, files):
 
 
 
+
 if __name__ == '__main__':
 
     import sys
@@ -345,4 +355,4 @@ if __name__ == '__main__':
     pprint(u.friends())
     pprint(u.users())
     
-
+# vim: set ts=4 et sw=4 sts=4
