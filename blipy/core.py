@@ -10,25 +10,30 @@
  version: 0.02+oauth
  
 """
+import mimetypes, mimetools, base64
+import datetime, time, urllib2, urllib, base64
+import simplejson
+from pprint import pprint
+
 API_VERSION = 0.02 #+ oauth
 URL = 'http://api.blip.pl'
 USER_AGENT = 'blipy - Blip.pl api library for python (0.02+oauth)'
 DEBUG = False# to be False in stable version
 UPDATE_BODY_LIMIT = 160
 
-import mimetypes, mimetools, base64
-import datetime, time, urllib2, urllib, base64
-import simplejson
-from pprint import pprint
 
 class ApiException(Exception):
     pass
 
+
 class BlipocInputError(ApiException):
     pass
 
+
 class BlipocConfigError(ApiException):
     pass
+
+
 class BaseApiObject(object):
     """
     base blip api class for containers
@@ -60,7 +65,7 @@ class BaseApiObject(object):
         """
         get specified status
         """
-        r = Request(account.credentials, uri, 'GET', None)
+        r = Request(account, uri, 'GET', None)
         data = r.request_json()
         return cls(account, data)
 
@@ -69,7 +74,7 @@ class BaseApiObject(object):
         """
         get specified status
         """
-        r = Request(account.credentials, uri, 'GET', None)
+        r = Request(account, uri, 'GET', None)
         data = r.request_json()
         res = []
         for i in data:

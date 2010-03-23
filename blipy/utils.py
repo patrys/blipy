@@ -55,20 +55,22 @@ class BlipOAuth(oauth.oauth.OAuthClient):
     ACC_URL = 'http://blip.pl/oauth/access_token'
     ATH_URL = 'http://blip.pl/oauth/authorize'
 
-    def __init__(self ):
+    def __init__(self, consumer_key, consumer_secret):
         self.connection = httplib.HTTPConnection("%s:%d" % ('blip.pl', 80))
+        self.signature = oauth.oauth.OAuthSignatureMethod_HMAC_SHA1()
+        self.consumer = oauth.oauth.OAuthConsumer(consumer_key, consumer_secret)
 
     def fetch_request_token(self, oauth_request):
-        self.connection.request(oauth_request.http_method, self.request_token_url, headers=oauth_request.to_header()) 
+        self.connection.request(oauth_request.http_method, self.REQ_URL, headers=oauth_request.to_header()) 
         response = self.connection.getresponse()
-        return oauth.OAuthToken.from_string(response.read())
+        return oauth.oauth.OAuthToken.from_string(response.read())
 
     def fetch_access_token(self, oauth_request):
         # via headers
         # -> OAuthToken
-        self.connection.request(oauth_request.http_method, self.access_token_url, headers=oauth_request.to_header()) 
+        self.connection.request(oauth_request.http_method, self.ACC_URL,  headers=oauth_request.to_header()) 
         response = self.connection.getresponse()
-        return oauth.OAuthToken.from_string(response.read())
+        return oauth.oauth.OAuthToken.from_string(response.read())
 
     def authorize_token(self, oauth_request):
         # via url
@@ -134,6 +136,11 @@ class BlipConfig(object):
     def start_auth(self, user, application, consumer_key = None, consumer_secret = None):
         if (not consumer_key is None) and (not consumer_secret is None):
             self.set_consumer(consumer_key, consumer_secret)
+
+        consumer_key, consumer_secret = self.get_consumer()
+        blip_oauth = BlipOAuth(consumer_key, consumer_secret)
+        # phase 1: request token
+        
 
 
     def save(self):
